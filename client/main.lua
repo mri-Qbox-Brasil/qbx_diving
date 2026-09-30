@@ -15,9 +15,10 @@ local function takeCoral(coralIndex)
     local times = math.random(2, 5)
     if lib.progressBar({
         duration = times * 1000,
-        label = Lang:t('info.collecting_coral'),
+        label = locale('info.collecting_coral'),
         canCancel = true,
         useWhileDead = false,
+        allowSwimming = true,
         disable = {
             move = true,
             car = true,
@@ -30,7 +31,6 @@ local function takeCoral(coralIndex)
             flag = 16
         }
     }) then
-        TriggerEvent('qbx_diving:client:coralTaken', coralIndex)
         TriggerServerEvent('qbx_diving:server:takeCoral', coralIndex)
     end
 end
@@ -71,7 +71,7 @@ local function createAreaBlips(areaIndex)
     SetBlipColour(labelBlip, 0)
     SetBlipAsShortRange(labelBlip, true)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(Lang:t('info.diving_area'))
+    AddTextComponentSubstringPlayerName(locale('info.diving_area'))
     EndTextCommandSetBlipName(labelBlip)
 
     return {radiusBlip, labelBlip}
@@ -86,7 +86,7 @@ local function createCoralZone(coralIndex, coral)
             debug = config.debugPoly,
             options = {
                 {
-                    label = Lang:t('info.collect_coral'),
+                    label = locale('info.collect_coral'),
                     icon = 'fa-solid fa-water',
                     onSelect = function()
                         takeCoral(coralIndex)
@@ -101,7 +101,7 @@ local function createCoralZone(coralIndex, coral)
             size = coral.boxDimensions.xyz,
             debug = config.debugPoly,
             onEnter = function()
-                lib.showTextUI(Lang:t('info.collect_coral_dt'))
+                lib.showTextUI(locale('info.collect_coral_dt'))
             end,
             onExit = function()
                 lib.hideTextUI()
@@ -135,7 +135,7 @@ end
 local function sellCoral()
     if lib.progressBar({
         duration = math.random(2000, 4000),
-        label = Lang:t('info.checking_pockets'),
+        label = locale('info.checking_pockets'),
         useWhileDead = false,
         canCancel = true,
         anim = {
@@ -144,23 +144,24 @@ local function sellCoral()
     }) then
         TriggerServerEvent('qbx_diving:server:sellCoral')
     else
-        exports.qbx_core:Notify(Lang:t('error.canceled'), 'error')
+        exports.qbx_core:Notify(locale('error.canceled'), 'error')
     end
+    ClearPedTasksImmediately(cache.ped)
 end
 
 local function createSeller()
-    for _, current in pairs(config.sellLocations) do
+    for _, current in pairs(sharedConfig.sellLocations) do
         current.model = type(current.model) == 'string' and joaat(current.model) or current.model
         lib.requestModel(current.model)
-        local currentCoords = vec4(current.coords.x, current.coords.y, current.coords.z - 1, current.coords.w)
-        local ped = CreatePed(0, current.model, currentCoords.x, currentCoords.y, currentCoords.z, currentCoords.w, false, false)
+        local ped = CreatePed(0, current.model, current.coords.x, current.coords.y, current.coords.z - 1, current.coords.w, false, false)
+        SetModelAsNoLongerNeeded(current.model)
         FreezeEntityPosition(ped, true)
         SetEntityInvincible(ped, true)
         SetBlockingOfNonTemporaryEvents(ped, true)
         if config.useTarget then
             exports.ox_target:addLocalEntity(ped, {
                 {
-                    label = Lang:t('info.sell_coral'),
+                    label = locale('info.sell_coral'),
                     icon = 'fa-solid fa-dollar-sign',
                     onSelect = sellCoral,
                 }
@@ -172,7 +173,7 @@ local function createSeller()
                 size = current.zoneDimensions,
                 debug = config.debugPoly,
                 onEnter = function()
-                    lib.showTextUI(Lang:t('info.sell_coral_dt'))
+                    lib.showTextUI(locale('info.sell_coral_dt'))
                 end,
                 onExit = function()
                     lib.hideTextUI()
